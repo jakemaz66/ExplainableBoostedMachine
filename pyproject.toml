@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "explainableboostedmachine"
+version = "0.1.0"
+description = ""
+authors = ["jakem <mazurkiewiczj@duq.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^2.2.2"
+scikit-learn = "^1.5.1"
+matplotlib = "^3.9.2"
+interpret = "^0.6.3"
+seaborn = "^0.13.2"
+statsmodels = "^0.14.3"
+xgboost = "^2.1.1"
+torch = "^2.4.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
