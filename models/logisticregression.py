@@ -51,10 +51,19 @@ def cross_validation_evaluation(model, X, y, cv=5, random_state=42):
     
     return results
 
+
 def plot_categorical_features(features, X, y, title_suffix, figsize=(15, 10)):
+    """Plotting the affect of categorical features on target variable
+
+    Args:
+        features (dataframe): The feaure columns
+        X (dataframe): The whole dataframe
+        y (series): The target variable
+        figsize (tuple, optional): The size of the figure. Defaults to (15, 10).
+    """
     num_features = len(features)
     
-    #Dynamically determine rows and columns based on number of features
+    #Dynamically determine number of rows based on number of features
     cols = 3
     rows = math.ceil(num_features / cols)
     
@@ -71,8 +80,8 @@ def plot_categorical_features(features, X, y, title_suffix, figsize=(15, 10)):
         
         #Set titles and labels
         plt.title(f'Impact of {feature} on >50K Income', fontsize=10)
-        plt.xlabel(f'{feature} (0/1)', fontsize=8)
-        plt.ylabel('Proportion of >50K Income', fontsize=8)
+        plt.xlabel(f'{feature} (0/1)', fontsize=7)
+        plt.ylabel('Proportion of >50K Income', fontsize=7)
         plt.grid(True)
     
     plt.tight_layout()
@@ -91,7 +100,6 @@ def visualize_results(models_results):
     models_results['Index'] = np.arange(len(models_results))
     results_df = pd.DataFrame(models_results, index=models_results['Index']).T.reset_index()
     
-
     sns.set(style="whitegrid")
     
     plt.figure(figsize=(10, 6))
@@ -105,7 +113,7 @@ def visualize_results(models_results):
     plt.show()
 
 
-def plot_logistic_regression(features, X, y, title_suffix, rows=2, cols=3, figsize=(15, 10)):
+def plot_logistic_regression(features, X, y, title_suffix, rows=2, cols=3, figsize=(15, 10), ):
     plt.figure(figsize=figsize)
     
     for i, feature in enumerate(features):
@@ -125,7 +133,6 @@ def plot_logistic_regression(features, X, y, title_suffix, rows=2, cols=3, figsi
     plt.show()
 
 
-
 def example():
     """This function runs a test example of the interpret show on a toy dataset
     """
@@ -143,7 +150,15 @@ def example():
     X = df.iloc[:, :-1]
     y = (df.iloc[:, -1] == " >50K").astype(int)
 
+    #Getting lengths of categorical features
     WClen = len(X['WorkClass'].unique())
+    Elen = len(X['Education'].unique())
+    MSlen = len(X['MaritalStatus'].unique())
+    Rlen = len(X['Race'].unique())
+    Glen = len(X['Gender'].unique())
+    NClen = len(X['NativeCountry'].unique())
+    Relen = len(X['Relationship'].unique())
+    Olen = len(X['Occupation'].unique())
 
     #Encoding the nominal variables for the logistic regression
     X = pd.get_dummies(X, drop_first=True)
@@ -158,12 +173,18 @@ def example():
     logistic_results = cross_validation_evaluation(logit, X_train, y_train, cv=5)
     visualize_results(logistic_results)
 
-    #We can plot the features and logstic curves using seaborn regplot
-    #First 6 features
+    #We can plot the continous features and logstic curves using seaborn regplot
     plot_logistic_regression(X_train.columns[:6], X_train, y_train, title_suffix="(1/3)")
 
-    #Next 6 features
-    plot_categorical_features(X_train.columns[6:6 + WClen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="(2/3)")
+    #Plot categorical features
+    plot_categorical_features(X_train.columns[6:6 + WClen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Working Class")
+    plot_categorical_features(X_train.columns[6 + WClen - 1: 6 + WClen - 1 + Elen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Education")
+    plot_categorical_features(X_train.columns[29:29 + MSlen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Marital Status")
+    plot_categorical_features(X_train.columns[35:35 + Olen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Occupation")
+    plot_categorical_features(X_train.columns[49:49 + Relen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Relationhip")
+    plot_categorical_features(X_train.columns[54:54 + Rlen - 1], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Race")
+    #Only half of Native Countries because there are so many
+    plot_categorical_features(X_train.columns[58:58 + (NClen // 4)], pd.concat([X_train, y_train], axis=1), y_train, title_suffix="Native Country")
 
 
 
