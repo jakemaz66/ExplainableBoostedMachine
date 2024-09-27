@@ -170,6 +170,28 @@ def example():
     logit = LogisticRegression()
     logit.fit(X_train, y_train)
 
+    #Extract log odds (coefficients) for continuous variables
+    log_odds = logit.coef_[0]
+    features = X_train.columns
+
+    #Compute the contribution of each feature for each prediction
+    contributions = X_train * log_odds
+
+    #Compute the absolute contribution of each feature for each prediction
+    abs_contributions = contributions.abs()
+
+    #Compute the average absolute contribution across all predictions for each feature
+    avg_abs_contributions = abs_contributions.mean(axis=0)
+
+    #Combine feature names and their corresponding average absolute contributions
+    feature_importance_df = pd.DataFrame({'Feature': features, 'Avg_Abs_Contribution': avg_abs_contributions})
+
+    #Sort features by their overall importance
+    feature_importance_df = feature_importance_df.sort_values(by='Avg_Abs_Contribution', ascending=False)
+
+    print("Overall importance (average absolute contribution) for each feature:")
+    print(feature_importance_df)
+
     logistic_results = cross_validation_evaluation(logit, X_train, y_train, cv=5)
     visualize_results(logistic_results)
 
