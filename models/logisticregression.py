@@ -5,6 +5,8 @@ from sklearn.linear_model import LogisticRegression
 import matplotlib.pyplot as plt
 import seaborn as sns
 import math
+import shap
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.model_selection import cross_validate, StratifiedKFold
 from sklearn.metrics import make_scorer, accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
@@ -133,6 +135,39 @@ def plot_logistic_regression(features, X, y, title_suffix, rows=2, cols=3, figsi
     plt.show()
 
 
+def compare_to_SHAP(logit, X_train, X_nonScaled):
+    """Calculates SHAP values for the provided model and training data and returns
+    a DataFrame of features and their overall SHAP values.
+
+    Args:
+        logit (model): The trained model (e.g., a logistic regression or any other model).
+        X_train (dataframe): The scaled or transformed training data used for model training.
+        X_nonScaled (dataframe): The original, non-scaled feature data (for feature names).
+        
+    Returns:
+        pd.DataFrame: A DataFrame containing feature names and their corresponding mean absolute SHAP values.
+    """
+    # Obtain SHAP values
+    shapExplain = shap.Explainer(logit, X_train)
+    shapValues = shapExplain(X_train)
+    
+    # Convert SHAP values back to original data
+    shapValues.feature_names = X_nonScaled.columns.tolist()
+    shapValues.data = X_nonScaled.values
+
+    # Compute the mean absolute SHAP value for each feature
+    mean_abs_shap_values = pd.DataFrame({
+        'Feature': X_nonScaled.columns,
+        'Mean_Abs_SHAP_Value': np.abs(shapValues.values).mean(axis=0)
+    })
+
+    # Sort by SHAP value to see the most impactful features at the top
+    mean_abs_shap_values = mean_abs_shap_values.sort_values(by='Mean_Abs_SHAP_Value', ascending=False).reset_index(drop=True)
+    
+    return mean_abs_shap_values
+    
+
+
 def example():
     """This function runs a test example of the interpret show on a toy dataset
     """
@@ -163,16 +198,28 @@ def example():
     #Encoding the nominal variables for the logistic regression
     X = pd.get_dummies(X, drop_first=True)
 
+    #Scaling the data
+    scaler = StandardScaler()
+    scaler.fit(X)
+    X_scale = scaler.transform(X)
+
     seed = 42
     np.random.seed(seed)
+    X_train_scale, X_test_scale, y_train_scale, y_test_scale = train_test_split(X_scale, y, test_size=0.20, random_state=seed)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=seed)
+
+    #Building scaled and non-scaled models
+    logit_scale = LogisticRegression()
+    logit_scale.fit(X_train_scale, y_train_scale)
 
     logit = LogisticRegression()
     logit.fit(X_train, y_train)
 
-    #Extract log odds (coefficients) for continuous variables
+    #Extract log odds (coefficients) for continuous variables (only available with non-scaled data)
     log_odds = logit.coef_[0]
-    features = X_train.columns
+    features = X.columns
+
+    shapValues = compare_to_SHAP(logit_scale, X_train_scale, X)
 
     #Compute the contribution of each feature for each prediction
     contributions = X_train * log_odds
@@ -188,6 +235,9 @@ def example():
 
     #Sort features by their overall importance
     feature_importance_df = feature_importance_df.sort_values(by='Avg_Abs_Contribution', ascending=False)
+
+    comparison_df = feature_importance_df.merge(shapValues, on='Feature')
+    print(comparison_df)
 
     print("Overall importance (average absolute contribution) for each feature:")
     print(feature_importance_df)

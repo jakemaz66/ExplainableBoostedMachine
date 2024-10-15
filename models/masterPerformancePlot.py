@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from interpret.glassbox import ExplainableBoostingClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
 
 def visualize_results(models_results):
@@ -55,9 +55,6 @@ def visualize_results(models_results):
     plt.ylabel('Score', fontsize=12)
     plt.legend(title='Model', fontsize=10, title_fontsize='13')
     plt.tight_layout()
-    plt.show()
-
-    #Show the plot
     plt.show()
 
 
@@ -325,10 +322,11 @@ def neural_network_results(model, X_test, y_test):
 
     #Calculate metrics
     metrics = {
-        'F1-Score': f1_score(y_test_np, predictions_np),
-        'Precision': precision_score(y_test_np, predictions_np),
-        'Recall': recall_score(y_test_np, predictions_np),
-        'Accuracy': accuracy_score(y_test_np, predictions_np),
+        'f1_score': f1_score(y_test_np, predictions_np),
+        'precision': precision_score(y_test_np, predictions_np),
+        'recall': recall_score(y_test_np, predictions_np),
+        'accuracy': accuracy_score(y_test_np, predictions_np),
+        'roc_auc': roc_auc_score(y_test_np, predictions_np)
     }
 
     return metrics
